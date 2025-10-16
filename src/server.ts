@@ -154,12 +154,13 @@ const normalizeYahooQuote = (quote: YahooQuote): NormalizedYahooQuote => {
   };
 };
 
-async function getYahooGainers(): Promise<NormalizedYahooQuote[]> {
+async function getYahooGainers(limit: number = 10): Promise<NormalizedYahooQuote[]> {
+  const limitValue = limitSchema.parse(limit);
   const url = new URL(
     'https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved',
   );
   url.searchParams.set('scrIds', 'day_gainers');
-  url.searchParams.set('count', '10');
+  url.searchParams.set('count', String(limitValue));
   url.searchParams.set('start', '0');
   url.searchParams.set('lang', 'en-US');
 
@@ -172,7 +173,7 @@ async function getYahooGainers(): Promise<NormalizedYahooQuote[]> {
   const quotes = data.finance?.result?.[0]?.quotes ?? [];
 
   return quotes
-    .slice(0, 10)
+    .slice(0, limitValue)
     .map(normalizeYahooQuote)
     .filter((quote) => quote.symbol !== 'N/A' && quote.symbol.length > 0);
 }
@@ -259,9 +260,12 @@ app.get('/api/top-movers', async (req, res) => {
   }
 });
 
-app.get('/api/yahoo-gainers', async (_req, res) => {
+app.get('/api/yahoo-gainers', async (req, res) => {
   try {
-    const quotes = await getYahooGainers();
+    const limitValue = limitSchema.parse(
+      req.query.limit ? Number.parseInt(String(req.query.limit), 10) : 10,
+    );
+    const quotes = await getYahooGainers(limitValue);
     res.json({ quotes });
   } catch (error) {
     console.error('Failed to fetch Yahoo gainers', error);

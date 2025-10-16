@@ -240,8 +240,8 @@ async function callTopMoversTool(limit) {
   return fallback.json();
 }
 
-async function fetchYahooGainers() {
-  const response = await fetch('/api/yahoo-gainers');
+async function fetchYahooGainers(limit) {
+  const response = await fetch(`/api/yahoo-gainers?limit=${limit}`);
   if (!response.ok) {
     throw new Error(`Yahoo Finance request failed with status ${response.status}`);
   }
@@ -259,7 +259,7 @@ async function loadData() {
   limitInput.value = limit;
   setStatus('Loading latest movers…');
 
-  const yahooState = await fetchYahooGainers()
+  const yahooState = await fetchYahooGainers(limit)
     .then((quotes) => ({ quotes }))
     .catch((error) => {
       console.error('Failed to load Yahoo gainers', error);
