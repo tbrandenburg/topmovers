@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Top Movers ChatGPT App</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.openai.com/apps-sdk/latest/openai-apps.min.js" defer></script>
+    <script src="main.js" defer></script>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Market Top Movers</h1>
+        <p class="subtitle">
+          Powered by Alpha Vantage's TOP_GAINERS_LOSERS endpoint and exposed via the Model Context Protocol.
+        </p>
+      </header>
+      <section class="controls">
+        <label for="limit">Results per list</label>
+        <input id="limit" type="number" min="1" max="20" value="10" />
+        <button id="refresh">Refresh</button>
+        <span id="status" role="status" aria-live="polite"></span>
+      </section>
+      <section id="tables" class="tables"></section>
+    </div>
+  </body>
+</html>
