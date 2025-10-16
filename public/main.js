@@ -19,6 +19,15 @@ const integerFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 0,
 });
 
+function getSymbolUrl(symbol) {
+  const normalized = (symbol ?? '').trim();
+  if (normalized.length === 0) {
+    return '#';
+  }
+  const encoded = encodeURIComponent(normalized);
+  return `https://finance.yahoo.com/quote/${encoded}`;
+}
+
 function setStatus(message, tone = 'info') {
   statusElement.textContent = message;
   statusElement.dataset.tone = tone;
@@ -72,7 +81,17 @@ function createTableSection(title, rows) {
     const tr = document.createElement('tr');
 
     const symbolCell = document.createElement('td');
-    symbolCell.textContent = row.ticker;
+    if (row.ticker) {
+      const symbolLink = document.createElement('a');
+      symbolLink.href = getSymbolUrl(row.ticker);
+      symbolLink.textContent = row.ticker;
+      symbolLink.target = '_blank';
+      symbolLink.rel = 'noopener noreferrer';
+      symbolLink.className = 'symbol-link';
+      symbolCell.appendChild(symbolLink);
+    } else {
+      symbolCell.textContent = '—';
+    }
     tr.appendChild(symbolCell);
 
     const priceCell = document.createElement('td');

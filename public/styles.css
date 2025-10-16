@@ -113,6 +113,18 @@ table {
   font-size: 0.95rem;
 }
 
+.symbol-link {
+  color: #38bdf8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.symbol-link:hover,
+.symbol-link:focus {
+  color: #f8fafc;
+  text-decoration: underline;
+}
+
 thead {
   background: rgba(51, 65, 85, 0.35);
 }
