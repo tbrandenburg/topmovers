@@ -74,6 +74,34 @@ type TopMoversResponse = {
   note?: string;
 };
 
+type YahooQuote = {
+  symbol?: string;
+  shortName?: string;
+  longName?: string;
+  regularMarketPrice?: number;
+  regularMarketPreviousClose?: number;
+  regularMarketChange?: number;
+  regularMarketChangePercent?: number;
+};
+
+type YahooFinanceResponse = {
+  finance?: {
+    result?: Array<{
+      quotes?: YahooQuote[];
+    }>;
+    error?: unknown;
+  };
+};
+
+type NormalizedYahooQuote = {
+  symbol: string;
+  name: string;
+  price: number | null;
+  previousClose: number | null;
+  change: number | null;
+  changePercent: number | null;
+};
+
 const parseNumericString = (value: string | undefined): number | null => {
   if (!value) {
     return null;
@@ -103,6 +131,50 @@ const ensureSuccess = (response: Response) => {
     throw new Error(`Alpha Vantage request failed with status ${response.status}`);
   }
 };
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const normalizeYahooQuote = (quote: YahooQuote): NormalizedYahooQuote => {
+  const symbol = quote.symbol?.trim() ?? 'N/A';
+  const rawName = quote.shortName ?? quote.longName ?? '';
+  const trimmedName = rawName.trim();
+
+  return {
+    symbol,
+    name: trimmedName.length > 0 ? trimmedName : 'Unknown Company',
+    price: isFiniteNumber(quote.regularMarketPrice) ? quote.regularMarketPrice : null,
+    previousClose: isFiniteNumber(quote.regularMarketPreviousClose)
+      ? quote.regularMarketPreviousClose
+      : null,
+    change: isFiniteNumber(quote.regularMarketChange) ? quote.regularMarketChange : null,
+    changePercent: isFiniteNumber(quote.regularMarketChangePercent)
+      ? quote.regularMarketChangePercent
+      : null,
+  };
+};
+
+async function getYahooGainers(): Promise<NormalizedYahooQuote[]> {
+  const url = new URL(
+    'https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved',
+  );
+  url.searchParams.set('scrIds', 'day_gainers');
+  url.searchParams.set('count', '25');
+  url.searchParams.set('start', '0');
+  url.searchParams.set('lang', 'en-US');
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Yahoo Finance request failed with status ${response.status}`);
+  }
+
+  const data = (await response.json()) as YahooFinanceResponse;
+  const quotes = data.finance?.result?.[0]?.quotes ?? [];
+
+  return quotes
+    .map(normalizeYahooQuote)
+    .filter((quote) => quote.symbol !== 'N/A' && quote.symbol.length > 0);
+}
 
 async function getTopMovers(limit: number): Promise<ToolOutput> {
   const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
@@ -182,6 +254,16 @@ app.get('/api/top-movers', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Failed to fetch top movers', error);
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.get('/api/yahoo-gainers', async (_req, res) => {
+  try {
+    const quotes = await getYahooGainers();
+    res.json({ quotes });
+  } catch (error) {
+    console.error('Failed to fetch Yahoo gainers', error);
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
