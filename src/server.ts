@@ -62,6 +62,18 @@ const toolOutputSchema = z.object({
       }),
     )
     .default([]),
+  yahooGainers: z
+    .array(
+      z.object({
+        symbol: z.string(),
+        name: z.string(),
+        price: z.number().nullable(),
+        previousClose: z.number().nullable(),
+        change: z.number().nullable(),
+        changePercent: z.number().nullable(),
+      }),
+    )
+    .default([]),
 });
 
 type ToolOutput = z.infer<typeof toolOutputSchema>;
@@ -201,10 +213,13 @@ async function getTopMovers(limit: number): Promise<ToolOutput> {
   const normalizeList = (items: Array<Record<string, string>> | undefined) =>
     (items ?? []).slice(0, limitValue).map(normalizeEntry);
 
+  const yahooGainers = await getYahooGainers(limitValue);
+
   const output: ToolOutput = {
     gainers: normalizeList(data.top_gainers),
     losers: normalizeList(data.top_losers),
     mostActive: normalizeList(data.top_most_actively_traded),
+    yahooGainers,
   };
 
   return output;
