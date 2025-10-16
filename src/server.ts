@@ -159,7 +159,7 @@ async function getYahooGainers(): Promise<NormalizedYahooQuote[]> {
     'https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved',
   );
   url.searchParams.set('scrIds', 'day_gainers');
-  url.searchParams.set('count', '25');
+  url.searchParams.set('count', '10');
   url.searchParams.set('start', '0');
   url.searchParams.set('lang', 'en-US');
 
@@ -172,6 +172,7 @@ async function getYahooGainers(): Promise<NormalizedYahooQuote[]> {
   const quotes = data.finance?.result?.[0]?.quotes ?? [];
 
   return quotes
+    .slice(0, 10)
     .map(normalizeYahooQuote)
     .filter((quote) => quote.symbol !== 'N/A' && quote.symbol.length > 0);
 }
